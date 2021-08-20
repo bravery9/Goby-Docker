@@ -1,3 +1,9 @@
+---
+title: Goby Server By Docker
+date: 2021-08-20 14:21:25
+---
+
+
 # Goby Server By Docker
 
 ## About
@@ -6,7 +12,7 @@
 >
 > The new generation of network security technology achieves rapid security emergency through the establishment of a complete asset database for the target.
 
-![image-20210820133955505](/Users/xrsec/Library/Application Support/typora-user-images/image-20210820133955505.png)
+![image-20210820133955505](https://rmt.ladydaily.com/fetch/ZYGG/storage/image-20210820133955505.png?w=1280)
 
 ## InStall
 
