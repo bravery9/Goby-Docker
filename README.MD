@@ -16,7 +16,7 @@ Username: goby
 Password: docker logs goby | grep " Goby_PassWord :"
 ```
 
-Github : https://github.com/XRSec/AWVS14-Docker.git
+Github : https://github.com/XRSec/Goby-Docker.git
 
 ## Use
 
@@ -123,7 +123,7 @@ echo "Starting Goby Service"
 
 ## Compile again
 
-Github : https://github.com/XRSec/AWVS14-Docker.git
+Github : https://github.com/XRSec/Goby-Docker.git
 
 ```bash
 git clone https://github.com/XRSec/AWVS14-Docker.git
