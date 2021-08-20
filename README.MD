@@ -8,13 +8,6 @@
 
 ![image-20210820133955505](https://rmt.ladydaily.com/fetch/ZYGG/storage/image-20210820133955505.png?w=1280)
 
-## InStall
-
-```bash
-docker run -it --name goby -p 15001:443 xrsec/goby:latest
-# Installing containers or updating goby requires downloading resources from GitHub
-```
-
 ### Info
 
 ```ini
@@ -25,54 +18,58 @@ Password: docker logs goby | grep " Goby_PassWord :"
 
 Github : https://github.com/XRSec/AWVS14-Docker.git
 
+## Use
+
+### InStall
+
+```bash
+docker run -it --name goby -p 15001:15001 -e password=password -e port=15001 xrsec/goby:latest
+# Installing containers or updating goby requires downloading resources from GitHub
+# -e password=password Set your password here 
+# [ -p 15001:15001 | -e port=15001 ] Recommended port consistency
+# --restart=always  Automatic restart
+```
+
+![image-20210820171215830](https://rmt.ladydaily.com/fetch/ZYGG/storage/20210820171444750926.png?w=1280&fmt=jpg)
+
+### Goby_Desktop
+
+![image-20210820171402647](https://rmt.ladydaily.com/fetch/ZYGG/storage/20210820171449669292.png?w=1280&fmt=jpg)
+
 ## The build Process
 
 ### Dockerfile
 
 ```dockerfile
-FROM nginx:alpine
+FROM ubuntu:18.04
 LABEL maintainer="xrsec"
 LABEL mail="troy@zygd.site"
 
-COPY ./docker-entrypoint.sh /
-COPY ./Dockerfile /opt/goby/
-COPY ./conf.d/default.conf /etc/nginx/conf.d/
-COPY ./docker-entrypoint.sh /
+COPY goby.sh /
 
-
-RUN apk add --update openssl wget unzip && \
-    rm -rf /var/cache/apk/* \
+RUN apt update -y && apt upgrade curl wget -y \
+    && apt install openssl wget unzip -y \
     && mkdir -p /opt/goby/goby_run.bak \
     && wget https://github.com/gobysec/Goby/releases/download/Beta1.8.298/goby-linux-x64-1.8.298.zip -O /opt/goby/goby-linux-x64-1.8.298.zip \
     && unzip /opt/goby/goby-linux-x64-1.8.298.zip -d /opt/goby/ \
     && mv /opt/goby/goby-linux-x64-1.8.298 /opt/goby/goby_run
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/goby.sh"]
 
-EXPOSE 80
+EXPOSE 8361
 
 STOPSIGNAL SIGQUIT
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/goby.sh"]
 ```
 
 
 
-### docker-entrypoint.sh
+### goby.sh
 
 ```sh
-#!/bin/sh
-# vim:sw=4:ts=4:et
-
-# init
+#!/bin/bash
 clear
-if [[ ! -f "/opt/goby/passwd" ]]; then
-    Goby_PassWord=`openssl rand -hex 10`
-    echo $Goby_PassWord > /opt/goby/passwd
-    echo "PassWord init Successful"
-else
-    Goby_PassWord=`cat /opt/goby/passwd`
-fi
 echo -e "\033[1;31m    _____    ____    ____   __     __ \033[0m"
 echo -e "\033[1;32m   / ____|  / __ \  |  _ \  \ \   / / \033[0m"
 echo -e "\033[1;33m  | |  __  | |  | | | |_) |  \ \_/ /  \033[0m"
@@ -87,40 +84,7 @@ echo -e "\033[1;34m  /  \  |  _ <  \__ \ |  __/ | (__  \033[0m"
 echo -e "\033[1;35m /_/\_\ |_| \_\ |___/  \___|  \___| \n\033[0m"
 echo -e "\033[1;31m Thank's fahai && TimeLine Sec \n\033[0m"
 echo -e "\033[1;32m [ help ] \033[0m"
-echo -e "\033[1;32m Goby_PassWord : $Goby_PassWord        \033[0m"
-
-
-set -e
-
-# Certificate of judgment
-
-if [[ ! -f "/etc/ssl/ca.key" ]]; then
-    # File not found
-    # by vipersec
-
-    Echo_c(){
-        echo "\033[1;33m\n$1\n\033[0m"
-    }
-
-    Rand_Name(){
-        openssl rand -base64 8 | md5sum | cut -c1-8
-    }
-
-    Gen_Cert(){
-        openssl rand -writerand /root/.rnd
-        rndca=$(Rand_Name)
-
-        openssl genrsa -out /etc/ssl/ca.key 4096
-        # openssl req -new  -x509 -days 3650 -key ca.key -out ca.crt -subj /C=CN/ST=$rndca/L=$rndca/O=$rndca/OU=$rndca/CN=$rndca
-        openssl req -new -key /etc/ssl/ca.key -out /etc/ssl/ca.csr -subj /C=CN/ST=$rndca/L=$rndca/O=$rndca/OU=$rndca/CN=$rndca
-        openssl x509 -req -in /etc/ssl/ca.csr -out /etc/ssl/ca.crt -signkey /etc/ssl/ca.key -days 3650
-    }
-    Gen_Cert
-    echo "Certificate is generated successfully."
-else
-#  File exists
-    echo "The certificate is ok!"
-fi
+echo -e "\033[1;32m Goby_PassWord : $password        \033[0m"
 
 # Goby update
 
@@ -152,68 +116,7 @@ fi
 # Start Goby
 
 echo "Starting Goby Service"
-nohup /opt/goby/goby_run/golib/goby-cmd-linux -mode api -apiauth goby:$Goby_PassWord >/opt/goby/goby.log 2>&1 &
-echo "Goby Done"
-
-
-# nginx default
-
-if [ -z "${NGINX_ENTRYPOINT_QUIET_LOGS:-}" ]; then
-    exec 3>&1
-else
-    exec 3>/dev/null
-fi
-
-if [ "$1" = "nginx" -o "$1" = "nginx-debug" ]; then
-    if /usr/bin/find "/docker-entrypoint.d/" -mindepth 1 -maxdepth 1 -type f -print -quit 2>/dev/null | read v; then
-        echo >&3 "$0: /docker-entrypoint.d/ is not empty, will attempt to perform configuration"
-
-        echo >&3 "$0: Looking for shell scripts in /docker-entrypoint.d/"
-        find "/docker-entrypoint.d/" -follow -type f -print | sort -V | while read -r f; do
-            case "$f" in
-                *.sh)
-                    if [ -x "$f" ]; then
-                        echo >&3 "$0: Launching $f";
-                        "$f"
-                    else
-                        # warn on shell scripts without exec bit
-                        echo >&3 "$0: Ignoring $f, not executable";
-                    fi
-                    ;;
-                *) echo >&3 "$0: Ignoring $f";;
-            esac
-        done
-
-        echo >&3 "$0: Configuration complete; ready for start up"
-    else
-        echo >&3 "$0: No files found in /docker-entrypoint.d/, skipping configuration"
-    fi
-fi
-
-exec "$@"
-
-```
-
-
-
-### default.conf
-
-```nginx
-server {
-    listen       443 ssl;
-    server_name  hack520.com www.hack520.com;
-    ssl_certificate     /etc/ssl/ca.crt;
-    ssl_certificate_key  /etc/ssl/ca.key;
-
-    ssl_session_timeout  5m;
-    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
-    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-    ssl_prefer_server_ciphers on;
-
-    location / {
-        proxy_pass http://127.0.0.1:8361;
-    }
-}
+/opt/goby/goby_run/golib/goby-cmd-linux -apiauth goby:$password -mode api -bind 0.0.0.0:$port
 ```
 
 
@@ -233,7 +136,5 @@ docker build -t goby:latest .
 ## Thanks to the list
 
 Gobysec : https://github.com/gobysec/Goby
-
-Qing : https://www.freebuf.com/sectool/280597.html
 
 Vipersec : https://www.yuque.com/vipersec
