@@ -1,9 +1,3 @@
----
-title: Goby Server By Docker
-date: 2021-08-20 14:21:25
----
-
-
 # Goby Server By Docker
 
 ## About
