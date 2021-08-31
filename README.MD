@@ -126,7 +126,7 @@ echo "Starting Goby Service"
 Github : https://github.com/XRSec/Goby-Docker.git
 
 ```bash
-git clone https://github.com/XRSec/AWVS14-Docker.git
+git clone https://github.com/XRSec/Goby-Docker.git
 cd AWVS14-Docker
 docker build -t goby:latest .
 ```
