@@ -1,0 +1,57 @@
+name: Goby Docker Build
+  
+on:
+  push
+
+jobs:
+  push_to_registry:
+    name: Goby Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        name: Check out the repo
+        uses: actions/checkout@v2
+      - 
+        name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - 
+        name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+      - 
+        name: version_checking
+        run: python .github/goby-server_version/version_checking.py
+      # update version
+      - 
+        name: Update resources
+        uses: test-room-7/action-update-file@v1
+        with:
+            file-path: .github/goby-server_version/goby-server_version
+            commit-msg: Update goby server version
+            github-token: ${{ secrets.TOKEN_GITHUB }}
+      - 
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - 
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - 
+        name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - 
+        name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            xrsec/goby:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

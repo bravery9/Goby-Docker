@@ -3,13 +3,13 @@ LABEL maintainer="xrsec"
 LABEL mail="troy@zygd.site"
 
 COPY goby.sh /
+COPY . /opt/goby
 
 RUN apt update -y && apt upgrade curl wget -y \
     && apt install openssl wget unzip -y \
-    && mkdir -p /opt/goby/goby_run.bak \
-    && wget https://github.com/gobysec/Goby/releases/download/Beta1.8.298/goby-linux-x64-1.8.298.zip -O /opt/goby/goby-linux-x64-1.8.298.zip \
-    && unzip /opt/goby/goby-linux-x64-1.8.298.zip -d /opt/goby/ \
-    && mv /opt/goby/goby-linux-x64-1.8.298 /opt/goby/goby_run
+    && wget `curl -s https://api.github.com/repos/gobysec/Goby/releases/latest | grep browser_download_url | grep linux | cut -d '"' -f 4` -O /opt/goby/goby-linux-x64.zip \
+    && unzip /opt/goby/goby-linux-x64.zip -d /opt/goby/ \
+    && mv /opt/goby/`echo \`curl -s https://api.github.com/repos/gobysec/Goby/releases/latest | grep "browser_download_url"| grep linux | cut -d '"' -f 4 |  cut -d "/" -f 9\` | sed 's/\.zip//g'` /opt/goby/goby_run
 
 ENTRYPOINT ["/goby.sh"]
 
